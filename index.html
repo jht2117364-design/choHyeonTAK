@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#132541">
+  <meta name="description" content="2023년 한국은행 산업연관표 기반 산업별 거래 구조 조회와 생산·부가가치·수입 유발효과 계산">
+  <title>2023 산업연관분석 | 산업조직론 과제물 1</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap">
+      <p class="eyebrow">2023 INPUT–OUTPUT ANALYSIS · 산업조직론 과제물 1</p>
+      <h1>2023 산업연관분석 웹앱</h1>
+      <p class="intro">한국은행 2023년 산업연관표(연장표)를 활용해 산업 간 거래를 조회하고, 최종수요 변화의 경제적 파급효과를 분석합니다.</p>
+      <div class="meta"><span>2023년 · 생산자가격</span><span>4개 산업분류</span><span>12개 분석 시트 / 분류</span><a target="_blank" rel="noopener" href="https://www.bok.or.kr/portal/bbs/B0000501/view.do?menuNo=201264&amp;nttId=10093668">한국은행 원자료 ↗</a></div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="panel loader" aria-labelledby="load-title">
+      <div class="section-heading">
+        <div><p class="step">STEP 01 · 데이터 준비</p><h2 id="load-title">산업분류 선택 및 Excel 불러오기</h2></div>
+        <span class="indicator" id="ready-badge">불러오기 전</span>
+      </div>
+      <div class="control-row">
+        <label for="level"><span>산업분류</span>
+          <select id="level">
+            <option value="large">통합대분류 · 33개 부문</option>
+            <option value="medium">통합중분류 · 83개 부문</option>
+            <option value="small">통합소분류 · 165개 부문</option>
+            <option value="basic">기본부문 · 380개 부문</option>
+          </select>
+        </label>
+        <button type="button" id="load" class="primary">선택한 Excel 불러오기</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">분류를 선택한 뒤 ‘선택한 Excel 불러오기’를 누르세요. 최초 실행에는 인터넷 연결이 필요합니다.</div>
+      <p class="tiny">최초 실행 시 Pyodide(Python 실행 환경)와 필수 패키지를 내려받습니다. 기본부문 파일은 크기가 커서 읽는 시간이 더 걸릴 수 있습니다. 파일은 GitHub Pages의 <code>data/</code>에서 불러옵니다.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="explore-title">
+      <div class="section-heading">
+        <div><p class="step">STEP 02 · 자료 탐색</p><h2 id="explore-title">거래표 및 계수표 조회</h2></div>
+        <span class="hint" id="explore-count">분류를 먼저 불러오세요</span>
+      </div>
+      <div class="explore-controls">
+        <label for="sheet"><span>분석 시트</span><select id="sheet" disabled></select></label>
+        <label for="row-search"><span>행 산업 검색</span><input type="search" id="row-search" placeholder="산업명 또는 코드" disabled></label>
+        <label for="row"><span>조회할 행</span><select id="row" disabled></select></label>
+        <label for="col-search"><span>열 산업·항목 검색</span><input type="search" id="col-search" placeholder="산업명 또는 코드" disabled></label>
+      </div>
+      <div class="table-title"><div><h3 id="explore-caption">조회 결과</h3><p class="tiny" id="unit">단위: —</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th scope="col">열 코드</th><th scope="col">열 산업·항목</th><th scope="col" class="numeric">값</th></tr></thead><tbody id="cells"><tr><td colspan="3" class="empty">Excel 파일을 불러오면 데이터를 검색할 수 있습니다.</td></tr></tbody></table></div>
+      <p class="tiny">행은 공급 산업(또는 계정), 열은 수요 산업(또는 최종수요 항목)입니다. 표의 항목 정의는 시트에 따라 다릅니다. 조회 값은 원본 Excel의 숫자를 표시합니다.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="sim-title">
+      <div class="section-heading"><div><p class="step">STEP 03 · 경제적 파급효과</p><h2 id="sim-title">최종수요 증가 시나리오</h2></div></div>
+      <p class="description">선택한 산업의 <strong>국산품 최종수요</strong>가 증가한다고 가정합니다. 여러 산업을 추가하면 효과를 합산합니다. <strong>1억원 = 100백만원</strong>으로 환산해 계산합니다.</p>
+      <form id="scenario" class="scenario-form">
+        <label for="sector-search"><span>산업 검색</span><input id="sector-search" type="search" placeholder="예: 건설, C09" disabled></label>
+        <label for="sector"><span>산업 선택</span><select id="sector" disabled></select></label>
+        <label for="amount"><span>최종수요 증가액 (억원)</span><input id="amount" type="number" min="0.01" step="any" value="100" disabled></label>
+        <button type="submit" id="add" disabled>시나리오 추가</button>
+      </form>
+      <div class="scenario-list-head"><h3>분석할 시나리오</h3><button type="button" id="clear" class="subtle">모두 지우기</button></div>
+      <ul id="basket" class="basket"><li class="empty">추가된 산업이 없습니다.</li></ul>
+      <div class="action-row"><button type="button" id="run" class="primary" disabled>유발효과 계산</button><span id="sim-status" aria-live="polite">먼저 산업을 추가하세요.</span></div>
+      <div id="results" hidden>
+        <div class="result-head"><h3>분석 결과</h3><button id="download" type="button" class="subtle">결과 CSV 저장</button></div>
+        <div class="stats" id="cards"></div>
+        <p id="multiplier" class="explain"></p>
+        <h3 class="chart-title">산업별 생산유발액 상위 12개</h3>
+        <div id="bars" class="bars"></div>
+        <div class="table-title"><h3>전체 산업별 계산 결과</h3><span class="tiny">단위: 억원</span></div>
+        <div class="table-scroll"><table><thead><tr><th>산업 코드</th><th>산업명</th><th class="numeric">생산유발액</th><th class="numeric">부가가치유발액</th><th class="numeric">수입유발액</th></tr></thead><tbody id="result-rows"></tbody></table></div>
+      </div>
+    </section>
+    <section class="panel methodology" aria-labelledby="method-title">
+      <div class="section-heading"><div><p class="step">분석 설명</p><h2 id="method-title">계산 방식과 해석</h2></div></div>
+      <div class="method-grid">
+        <div><h3>생산유발효과</h3><p><code>Δx = L · Δf</code><br><code>L = (I − Aᵈ)⁻¹</code><br>최종수요 증가에 필요한 산업별 직·간접 산출 증가액입니다.</p></div>
+        <div><h3>수입유발효과</h3><p><code>Δm = M · Δf</code><br><code>M = Aᵐ · L</code><br>수입 중간재에 따른 수입유발액을 계산합니다.</p></div>
+        <div><h3>부가가치유발효과</h3><p><code>Δv = V · Δf</code><br><code>V = diag(v) · L</code><br>각 산업에 발생하는 부가가치 증가액입니다.</p></div>
+      </div>
+      <p class="tiny">L, M, V는 해당 분류 파일의 ‘생산유발계수’, ‘수입유발계수’, ‘부가가치유발계수’ 시트를 사용합니다. 가상 최종수요 충격에 대한 정태적 분석이며, 실제 미래 생산액의 예측값은 아닙니다. 산출액과 부가가치는 서로 더하지 않습니다.</p>
+      <details><summary>데이터 검증 결과 보기</summary><pre id="validation">불러온 뒤 나타납니다.</pre><p class="tiny">원본 계수표의 행렬 항등식 잔차를 비교해 데이터 배열이 올바른지 검증합니다. 최대 절댓값 기준 1×10⁻⁷ 이내.</p></details>
+    </section>
+    <footer><p>출처: 한국은행, 「2023년 산업연관표(연장표)」. 교수님 실습 참고: <a href="https://github.com/profguclass/Sample_IO" target="_blank" rel="noopener">Sample_IO</a>. 계산은 방문자 브라우저의 Pyodide에서 수행됩니다.</p></footer>
+  </main>
+</body>
+</html>
